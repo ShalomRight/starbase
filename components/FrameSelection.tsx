@@ -41,11 +41,10 @@ const FrameSelection: React.FC<FrameSelectionProps> = ({ onSelectFrame, onBack }
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-5 py-2 text-sm font-sans font-black italic uppercase tracking-wide whitespace-nowrap transition-all transform -skew-x-6 ${
-                selectedCategory === cat
+              className={`px-5 py-2 text-sm font-sans font-black italic uppercase tracking-wide whitespace-nowrap transition-all transform -skew-x-6 ${selectedCategory === cat
                   ? "bg-neutral-900 text-white shadow-md"
                   : "bg-red-800 text-red-200 hover:bg-red-900"
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -61,7 +60,7 @@ const FrameSelection: React.FC<FrameSelectionProps> = ({ onSelectFrame, onBack }
             onClick={() => onSelectFrame(null)}
             className="group bg-white border-2 border-gray-200 hover:border-red-600 transition-all active:scale-95 flex flex-col shadow-sm"
           >
-            <div className="aspect-[4/5] w-full flex items-center justify-center bg-gray-50 group-hover:bg-white">
+            <div className="aspect-[9/16] w-full flex items-center justify-center bg-gray-50 group-hover:bg-white">
               <Slash className="w-10 h-10 text-gray-300 group-hover:text-red-500 transition-colors" />
             </div>
             <div className="p-3 text-center bg-white w-full border-t border-gray-100">
@@ -75,7 +74,7 @@ const FrameSelection: React.FC<FrameSelectionProps> = ({ onSelectFrame, onBack }
               onClick={() => onSelectFrame(frame)}
               className="group bg-white border-2 border-gray-200 hover:border-red-600 transition-all active:scale-95 flex flex-col shadow-sm"
             >
-              <div className="aspect-[4/5] w-full bg-gray-100 relative overflow-hidden">
+              <div className="aspect-[9/16] w-full bg-gray-100 relative overflow-hidden">
                 <img src={frame.url || "/placeholder.svg"} alt={frame.name} className="w-full h-full object-cover" />
               </div>
               <div className="p-3 text-left bg-white w-full border-t border-gray-100">

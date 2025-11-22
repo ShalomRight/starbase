@@ -43,7 +43,7 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
     if (currentUpload) {
       setShowSuccessModal(true)
       // Extended timeout to allow user to interact with share buttons
-      setTimeout(() => setShowSuccessModal(false), 8000)
+      setTimeout(() => setShowSuccessModal(false), 3000)
     }
 
     const fetchImages = async () => {
