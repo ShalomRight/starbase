@@ -9,10 +9,11 @@ import CameraPage from "@/components/CameraPage"
 import PhotoWall from "@/components/PhotoWall"
 import PhotoFeed from "@/components/PhotoFeed"
 import HistoryPage from "@/components/HistoryPage"
+import DomeGallery from "@/components/DomeGallery"
 import BottomNav from "@/components/BottomNav"
 import { Frame } from "@/types"
 
-type Page = "cover" | "landing" | "capture" | "frames" | "camera" | "wall" | "feed"
+type Page = "cover" | "landing" | "capture" | "frames" | "camera" | "wall" | "feed" | "dome"
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<Page>("cover")
