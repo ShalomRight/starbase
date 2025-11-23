@@ -23,16 +23,15 @@ export const FRAMES: Frame[] = [
   },
 ]
 
-export const CLOUDINARY_CONFIG = {
-  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "",
-  uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "",
-  wallTag: process.env.NEXT_PUBLIC_CLOUDINARY_WALL_TAG || "ulp_wall",
-  ApiSecret: process.env.CLOUDINARY_API_SECRET || "",
-  ApiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || "",
+export const IMAGEKIT_CONFIG = {
+  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "",
+  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
+  folder: process.env.IMAGEKIT_FOLDER || "ulp-stars",
 }
 
 export const TAGS = {
   STAR_PIC: "star-pic",
   FEATURED: "featured",
-  FRAME: "frames", // Plural as per new request
+  FRAME: "frames",
 }

@@ -5,32 +5,16 @@ export interface Frame {
   url: string
 }
 
-export interface CloudinaryUploadResponse {
-  secure_url: string
-  public_id: string
+export interface ImageKitFile {
+  fileId: string
+  name: string
+  filePath: string
+  url: string
   tags?: string[]
-  context?: {
-    custom?: {
-      [key: string]: string
-    }
-  }
   width?: number
   height?: number
-  created_at?: string
-}
-
-export interface CloudinaryResource {
-  public_id: string
-  secure_url: string
-  tags?: string[]
-  context?: {
-    custom?: {
-      [key: string]: string
-    }
-  }
-  width?: number
-  height?: number
-  created_at?: string
+  size: number
+  createdAt: string
 }
 
 export interface WallImage {

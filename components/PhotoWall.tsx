@@ -8,14 +8,12 @@ import {
   Star,
   Loader2,
   Share2,
-  Trophy,
-  TrendingUp,
-  Users,
   Sparkles,
   Check,
   LinkIcon,
 } from "lucide-react"
 import { getWallImages } from "../lib/actions"
+import OptimizedImage from "./OptimizedImage"
 
 interface PhotoWallProps {
   currentUpload?: string | null
@@ -29,8 +27,14 @@ interface PhotoMetrics {
   trending: string[]
 }
 
+interface WallImage {
+  id: string
+  url: string
+  aspectRatio: number
+}
+
 const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName = "Star" }) => {
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<WallImage[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [metrics, setMetrics] = useState<PhotoMetrics>({ totalPhotos: 0, yourContribution: 0, trending: [] })
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -49,11 +53,18 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
     const fetchImages = async () => {
       setIsLoading(true)
       try {
-        // 1. Try to fetch real images from Cloudinary
+        // 1. Try to fetch real images from ImageKit
         const wallImages = await getWallImages()
 
+        // Map ImageKit files to WallImage
+        const mappedWallImages: WallImage[] = wallImages.map((img: any) => ({
+          id: img.fileId,
+          url: img.url,
+          aspectRatio: img.width && img.height ? img.width / img.height : 9 / 16,
+        }))
+
         // 2. Mock data as fallback/filler so the wall looks good immediately
-        const mockImages = [
+        const mockUrls = [
           "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/588363042_25802814315978061_7224626267314817289_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=iQXVAravhGkQ7kNvwEaB8ws&_nc_oc=AdkeF6yAp0gsxVevTZVpriU4eyywGZ0sSJNGY1V4BoWacC528uXxDXa48ePRYiIuds8&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=ymxLzUPgGN-DSej9xYSu_w&oh=00_AfgO01jiGDeoyNYL7JsFcDlaskKboYjQi3pDjXaImENmww&oe=6927DA1D", // Campaign vibe
           "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/546162704_1332115925200750_4753958421008208380_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=BFqHpt7tVeYQ7kNvwGGuJ0r&_nc_oc=AdlJRt73gduzLHkUrZFSnsG4UdX5Ap5LVdG5N8Ivp3qyiXXrjZ4ylxHShXaEYuOWVuw&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=2uMm4j5mlzHaY01P8NNang&oh=00_AfjOyoG9jwgv31VZIQk_41jaKYwtkG-Jlx4hmNIuec6EqQ&oe=6927AF39",
           "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/545306024_1332115951867414_7099443326228007837_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=2kY8_24BlscQ7kNvwHY2-9E&_nc_oc=Adni8Ewnidqm9bYqVdpd180Qo4fP65hJThOXwxEF6utciVsqQqMxdC3wNGOQ4mtSPyc&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=4CUmXn3axozAw8fIm4MWqg&oh=00_Afgysflt7i_b00h_Gras-lIK6OFyMa9A7Y3IKiL22ZpZ7A&oe=6927BEF0",
@@ -63,26 +74,44 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
           "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/578152552_1380528110359531_8871945834446734851_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_ohc=Szbz5J_2C-QQ7kNvwFmSWU1&_nc_oc=AdlZiVw4xbLyQ3E4VifGe0WqRphqdqsTclQxW9m-5OzXnlzmQg7WlbPt8-zBZibvXs8&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=rjoplnzs3arqstUIQHw78g&oh=00_Afi8uig-xZfwIYyK1L4Rx0IsFzvwwua2O-0t6daKNnnKYQ&oe=6927C582",
         ]
 
+        const mappedMockImages: WallImage[] = mockUrls.map((url, idx) => ({
+          id: `mock-${idx}`,
+          url,
+          aspectRatio: 9 / 16,
+        }))
+
         // Combine real images with mocks (Real images first)
         // Deduplicate based on URL
-        const uniqueImages = Array.from(new Set([...wallImages, ...mockImages]))
+        const allImages = [...mappedWallImages, ...mappedMockImages]
+        const uniqueImages = Array.from(new Map(allImages.map(item => [item.url, item])).values())
 
-        let allImages = uniqueImages
+        let finalImages = uniqueImages
 
         // Ensure current upload is at the very top
         if (currentUpload) {
-          allImages = [currentUpload, ...allImages.filter((img) => img !== currentUpload)]
+          const currentImage: WallImage = {
+            id: 'current-upload',
+            url: currentUpload,
+            aspectRatio: 9 / 16
+          }
+          finalImages = [currentImage, ...finalImages.filter((img) => img.url !== currentUpload)]
         }
 
-        setImages(allImages)
+        setImages(finalImages)
         setMetrics({
-          totalPhotos: allImages.length + 120, // Add base count for social proof
+          totalPhotos: finalImages.length + 120, // Add base count for social proof
           yourContribution: currentUpload ? 1 : 0,
-          trending: allImages.slice(0, 3),
+          trending: finalImages.slice(0, 3).map(i => i.url),
         })
       } catch (error) {
         console.error("Failed to load wall", error)
-        if (currentUpload) setImages([currentUpload])
+        if (currentUpload) {
+          setImages([{
+            id: 'current-upload',
+            url: currentUpload,
+            aspectRatio: 9 / 16
+          }])
+        }
       } finally {
         setIsLoading(false)
       }
@@ -201,11 +230,14 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <img
-            src={selectedImage || "/placeholder.svg"}
+          <OptimizedImage
+            src={selectedImage}
             alt="Selected"
+            width={800}
+            height={1200}
             className="max-w-full max-h-full object-contain shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: any) => e.stopPropagation()}
+            showPlaceholder={false}
           />
           <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4 pointer-events-none">
             <button
@@ -248,27 +280,6 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
           </button>
         </div>
 
-        {/* Stats Bar */}
-        {/* <div className="bg-red-900/50 border-t border-red-600/30 px-4 py-3">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="bg-white/10 rounded p-2">
-              <Users className="w-5 h-5 mx-auto mb-1 text-red-200" />
-              <p className="text-xl font-black">{metrics.totalPhotos}</p>
-              <p className="text-[9px] uppercase tracking-wider text-red-200">Stars</p>
-            </div>
-            <div className="bg-white/10 rounded p-2">
-              <TrendingUp className="w-5 h-5 mx-auto mb-1 text-yellow-400" />
-              <p className="text-xl font-black">+{Math.floor(metrics.totalPhotos * 0.15)}</p>
-              <p className="text-[9px] uppercase tracking-wider text-red-200">Today</p>
-            </div>
-            <div className="bg-white/10 rounded p-2">
-              <Trophy className="w-5 h-5 mx-auto mb-1 text-yellow-400" />
-              <p className="text-xl font-black">#{Math.floor(Math.random() * 3) + 1}</p>
-              <p className="text-[9px] uppercase tracking-wider text-red-200">Trending</p>
-            </div>
-          </div>
-        </div> */}
-
         {/* Your Contribution Badge */}
         {currentUpload && (
           <div className="bg-red-800 text-neutral-900 px-4 py-2 flex items-center justify-center gap-2">
@@ -305,10 +316,13 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
                       <h3 className="font-black italic uppercase text-neutral-900 tracking-wide">Just Added</h3>
                     </div>
                     <div className="bg-white p-2 shadow-xl border-4 border-red-600 transform -rotate-1">
-                      <img
-                        src={currentUpload || "/placeholder.svg"}
+                      <OptimizedImage
+                        src={currentUpload}
                         alt="Your photo"
+                        width={400}
+                        height={600}
                         className="w-full aspect-[9/16] object-cover cursor-pointer"
+                        style={{ width: '100%', height: 'auto' }}
                         onClick={() => handleImageClick(currentUpload)}
                       />
                       <div className="flex items-center justify-between p-2 bg-red-600 text-white mt-2">
@@ -320,32 +334,30 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
                 )}
 
                 {/* All Photos Grid */}
-                {/* <div className="mb-3">
-                  <h3 className="font-black italic uppercase text-neutral-900 mb-3 tracking-wide flex items-center gap-2">
-                    <Users className="w-5 h-5 text-red-600" />
-                    All Supporters
-                  </h3>
-                </div> */}
-
-                {/* <div className="grid grid-cols-2 gap-3 pb-24">
-                  {images.map((url, idx) => (
+                <div className="grid grid-cols-2 gap-3 pb-24">
+                  {images.map((img, idx) => (
                     <div
-                      key={idx}
+                      key={img.id || idx}
                       className="aspect-[9/16] bg-white p-1.5 shadow-md hover:shadow-xl transform transition-all hover:scale-105 cursor-pointer group relative"
-                      onClick={() => handleImageClick(url)}
+                      onClick={() => handleImageClick(img.url)}
                     >
-                      <img
-                        src={url || "/placeholder.svg"}
+                      <OptimizedImage
+                        src={img.url}
                         alt={`Star ${idx + 1}`}
+                        width={300}
+                        height={500}
                         className="w-full h-full object-cover"
+                        style={{ width: '100%', height: '100%' }}
                         loading="lazy"
+                        aspectRatio={img.aspectRatio}
+                        showPlaceholder={true}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                         <span className="text-white text-xs font-bold">Supporter #{idx + 1}</span>
                       </div>
                     </div>
                   ))}
-                </div> */}
+                </div>
               </div>
             )}
           </>

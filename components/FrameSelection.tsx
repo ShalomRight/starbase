@@ -3,9 +3,10 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { ArrowLeft, Slash, Loader2 } from "lucide-react"
-import type { Frame, CloudinaryResource } from "../types"
+import type { Frame } from "../types"
 import { CATEGORIES } from "../lib/constants"
 import { getFrames } from "../lib/actions"
+import OptimizedImage from "./OptimizedImage"
 
 interface FrameSelectionProps {
   onSelectFrame: (frame: Frame | null) => void
@@ -13,7 +14,7 @@ interface FrameSelectionProps {
 }
 
 const FrameSelection: React.FC<FrameSelectionProps> = ({ onSelectFrame, onBack }) => {
-  const [frames, setFrames] = useState<CloudinaryResource[]>([])
+  const [frames, setFrames] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("All")
 
@@ -35,7 +36,7 @@ const FrameSelection: React.FC<FrameSelectionProps> = ({ onSelectFrame, onBack }
   const filteredFrames =
     selectedCategory === "All"
       ? frames
-      : frames.filter((f: CloudinaryResource) => f.tags?.includes(selectedCategory))
+      : frames.filter((f: any) => f.tags?.includes(selectedCategory))
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -102,14 +103,21 @@ const FrameSelection: React.FC<FrameSelectionProps> = ({ onSelectFrame, onBack }
               <Loader2 className="w-8 h-8 animate-spin text-red-600" />
             </div>
           ) : (
-            filteredFrames.map((frame: CloudinaryResource) => (
+            filteredFrames.map((frame: any) => (
               <button
-                key={frame.public_id}
-                onClick={() => onSelectFrame({ id: frame.public_id, name: frame.public_id, url: frame.secure_url, category: "custom" })}
+                key={frame.fileId}
+                onClick={() => onSelectFrame({ id: frame.fileId, name: frame.name, url: frame.url, category: "custom" })}
                 className="group bg-white border-2 border-gray-200 hover:border-red-600 transition-all active:scale-95 flex flex-col shadow-sm"
               >
                 <div className="aspect-[9/16] w-full bg-gray-100 relative overflow-hidden">
-                  <img src={frame.secure_url || "/placeholder.svg"} alt="Frame" className="w-full h-full object-cover" />
+                  <OptimizedImage
+                    src={frame.url}
+                    alt="Frame"
+                    width={200}
+                    height={350}
+                    className="w-full h-full object-cover"
+                    showPlaceholder={true}
+                  />
                 </div>
                 <div className="p-3 text-left bg-white w-full border-t border-gray-100">
                   <div className="flex flex-wrap gap-1 mt-1">

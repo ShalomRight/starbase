@@ -19,7 +19,7 @@ import {
   Palette,
 } from "lucide-react"
 import type { Frame } from "../types"
-import { uploadToCloudinary } from "../lib/actions"
+import { uploadToImageKit } from "../lib/actions"
 import { savePhotoToHistory } from "../lib/storage"
 
 interface CameraPageProps {
@@ -262,7 +262,7 @@ const CameraPage: React.FC<CameraPageProps> = ({ imageSrc, frame, onBack, onStar
     setLoadingText("Posting...")
 
     try {
-      const url = await uploadToCloudinary(compositedImage, ["star-pic"])
+      const url = await uploadToImageKit(compositedImage, ["star-pic"], "/ulp-stars")
       savePhotoToHistory(url)
       onGoToWall(url)
     } catch (error) {

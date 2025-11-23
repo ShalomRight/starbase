@@ -1,18 +1,16 @@
-import { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react"
+import { useState, useEffect, useRef, useLayoutEffect } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
-import {
-    Share2, Star, Zap, ChevronLeft, ChevronRight, X
-} from "lucide-react"
+import { Share2, Star, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { getWallImages } from "../lib/actions"
+import OptimizedImage from "./OptimizedImage"
 
 // Custom Hooks
 const useMedia = (queries: string[], values: number[], defaultValue: number) => {
-    // Check if window is defined (client-side)
     const isClient = typeof window !== "undefined"
 
     const get = () => {
         if (!isClient) return defaultValue
-        const index = queries.findIndex(q => matchMedia(q).matches)
+        const index = queries.findIndex((q) => matchMedia(q).matches)
         return index > -1 ? values[index] : defaultValue
     }
 
@@ -21,8 +19,8 @@ const useMedia = (queries: string[], values: number[], defaultValue: number) => 
     useEffect(() => {
         if (!isClient) return
         const handler = () => setValue(get)
-        queries.forEach(q => matchMedia(q).addEventListener('change', handler))
-        return () => queries.forEach(q => matchMedia(q).removeEventListener('change', handler))
+        queries.forEach((q) => matchMedia(q).addEventListener("change", handler))
+        return () => queries.forEach((q) => matchMedia(q).removeEventListener("change", handler))
     }, [queries, isClient])
 
     return value
@@ -45,22 +43,38 @@ const useMeasure = () => {
     return [ref, size] as const
 }
 
+// Image interface for ImageKit
+interface WallImage {
+    id: string
+    url: string
+    aspectRatio: number
+    category: string
+    tags: string[]
+    created_at: string
+    index: number
+    x?: number
+    y?: number
+    w?: number
+    h?: number
+    col?: number
+}
+
 // Masonry Grid Component
 interface MasonryGridProps {
-    images: any[]
-    onImageClick: (image: any) => void
+    images: WallImage[]
+    onImageClick: (image: WallImage) => void
 }
 
 const MasonryGrid = ({ images, onImageClick }: MasonryGridProps) => {
     const columns = useMedia(
-        ['(min-width:1024px)', '(min-width:640px)', '(min-width:400px)'],
+        ["(min-width:1024px)", "(min-width:640px)", "(min-width:400px)"],
         [4, 3, 2],
         2
     )
 
     const [containerRef, { width }] = useMeasure()
 
-    // Calculate masonry grid layout with proper aspect ratios
+    // Calculate masonry grid layout
     const calculatedGrid = (() => {
         if (!width) return []
         const colHeights = new Array(columns).fill(0)
@@ -72,7 +86,6 @@ const MasonryGrid = ({ images, onImageClick }: MasonryGridProps) => {
             const col = colHeights.indexOf(Math.min(...colHeights))
             const x = col * (columnWidth + gap)
 
-            // Calculate height based on the image's aspect ratio
             const aspectRatio = image.aspectRatio || 9 / 16
             const height = columnWidth / aspectRatio
 
@@ -87,11 +100,15 @@ const MasonryGrid = ({ images, onImageClick }: MasonryGridProps) => {
         <div
             className="relative w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth"
             style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#b91c1c #404040'
+                scrollbarWidth: "thin",
+                scrollbarColor: "#b91c1c #404040",
             }}
         >
-            <div ref={containerRef} className="relative w-full" style={{ height: Math.max(...calculatedGrid.map(i => i.y + i.h), 100) }}>
+            <div
+                ref={containerRef}
+                className="relative w-full"
+                style={{ height: Math.max(...calculatedGrid.map((i) => i.y! + i.h!), 100) }}
+            >
                 <AnimatePresence>
                     {calculatedGrid.map((item, index) => {
                         return (
@@ -113,27 +130,32 @@ const MasonryGrid = ({ images, onImageClick }: MasonryGridProps) => {
                                     delay: index * 0.02,
                                     type: "spring",
                                     stiffness: 120,
-                                    damping: 20
+                                    damping: 20,
                                 }}
                                 whileHover={{
                                     scale: 1.03,
                                     zIndex: 10,
-                                    transition: { duration: 0.2 }
+                                    transition: { duration: 0.2 },
                                 }}
                                 className="absolute cursor-pointer"
                                 style={{
                                     width: item.w,
                                     height: item.h,
-                                    willChange: 'transform'
+                                    willChange: "transform",
                                 }}
                                 onClick={() => onImageClick(item)}
                             >
                                 <div className="relative w-full h-full bg-white p-1.5 shadow-md hover:shadow-2xl transition-shadow">
-                                    <img
+                                    <OptimizedImage
                                         src={item.url}
                                         alt={`Star ${item.index + 1}`}
+                                        width={item.w!}
+                                        height={item.h!}
                                         className="w-full h-full object-cover"
+                                        aspectRatio={item.aspectRatio}
                                         loading="lazy"
+                                        showPlaceholder={true}
+                                        showFallback={true}
                                     />
 
                                     {/* Hover overlay */}
@@ -155,9 +177,9 @@ const MasonryGrid = ({ images, onImageClick }: MasonryGridProps) => {
 
 // Main PhotoFeed Component
 const PhotoFeed = () => {
-    const [images, setImages] = useState<any[]>([])
-    const [filteredImages, setFilteredImages] = useState<any[]>([])
-    const [selectedImage, setSelectedImage] = useState<any>(null)
+    const [images, setImages] = useState<WallImage[]>([])
+    const [filteredImages, setFilteredImages] = useState<WallImage[]>([])
+    const [selectedImage, setSelectedImage] = useState<WallImage | null>(null)
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [selectedCategory, setSelectedCategory] = useState("All")
 
@@ -167,32 +189,26 @@ const PhotoFeed = () => {
 
     const CATEGORIES = ["All", "Featured"]
 
-    // Fetch images from Cloudinary
+    // Fetch images from ImageKit
     useEffect(() => {
         const fetchImages = async () => {
             try {
-                // Fetch real images
                 const wallImages = await getWallImages()
 
-                const imageData = wallImages.map((img: any, idx: number) => {
+                const imageData: WallImage[] = wallImages.map((img: any, idx: number) => {
                     let category = "Newest"
                     if (img.tags?.includes("featured")) {
                         category = "Featured"
                     }
-                    // If we want to distinguish "Newest" specifically, we can just treat all as Newest by default, 
-                    // but "Featured" ones are also "Newest". 
-                    // The filter logic below handles "All" and specific categories.
-                    // For "Newest" filter, we might want to show all sorted by date.
-                    // For "Featured" filter, show only featured.
 
                     return {
-                        id: img.public_id,
-                        url: img.secure_url,
+                        id: img.fileId,
+                        url: img.url,
                         aspectRatio: img.width && img.height ? img.width / img.height : 9 / 16,
-                        category: category, // This is just for display or initial logic, but filtering should check tags dynamically or we map properly.
+                        category: category,
                         tags: img.tags || [],
-                        created_at: img.created_at,
-                        index: idx
+                        created_at: img.createdAt,
+                        index: idx,
                     }
                 })
 
@@ -210,18 +226,16 @@ const PhotoFeed = () => {
         if (selectedCategory === "All") {
             setFilteredImages(images)
         } else if (selectedCategory === "Newest") {
-            // Sort by date if possible, otherwise just show all
-            // Assuming images are already sorted by date from backend
             setFilteredImages(images)
         } else if (selectedCategory === "Featured") {
-            setFilteredImages(images.filter(img => img.tags?.includes("featured")))
+            setFilteredImages(images.filter((img) => img.tags?.includes("featured")))
         } else {
-            setFilteredImages(images.filter(img => img.category === selectedCategory))
+            setFilteredImages(images.filter((img) => img.category === selectedCategory))
         }
     }, [selectedCategory, images])
 
-    const handleImageClick = (image: any) => {
-        const index = filteredImages.findIndex(img => img.id === image.id)
+    const handleImageClick = (image: WallImage) => {
+        const index = filteredImages.findIndex((img) => img.id === image.id)
         setSelectedIndex(index)
         setSelectedImage(image)
     }
@@ -260,7 +274,7 @@ const PhotoFeed = () => {
     }
 
     const metrics = {
-        totalPhotos: images.length + 120
+        totalPhotos: images.length + 120,
     }
 
     return (
@@ -275,7 +289,7 @@ const PhotoFeed = () => {
                         className="fixed inset-0 z-50 flex items-center justify-center p-4"
                         onClick={handleCloseZoom}
                     >
-                        {/* Darkened background with visible grid behind */}
+                        {/* Darkened background */}
                         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
                         {/* Navigation arrows */}
@@ -323,11 +337,17 @@ const PhotoFeed = () => {
                         >
                             <div className="bg-white p-2 shadow-2xl border-4 border-red-600 transform -rotate-1">
                                 <div style={{ aspectRatio: selectedImage.aspectRatio || 9 / 16 }}>
-                                    <img
+                                    <OptimizedImage
                                         src={selectedImage.url}
                                         alt={`Supporter ${selectedImage.index + 1}`}
+                                        width={400}
+                                        height={400}
                                         className="w-full h-full object-cover"
-                                        draggable={false}
+                                        aspectRatio={selectedImage.aspectRatio}
+                                        loading="eager"
+                                        priority={true}
+                                        showPlaceholder={true}
+                                        showFallback={true}
                                     />
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-red-600 text-white mt-2">
@@ -336,7 +356,11 @@ const PhotoFeed = () => {
                                     </span>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-bold uppercase opacity-80">
-                                            {selectedImage.aspectRatio === 1 ? "Square" : selectedImage.aspectRatio === 16 / 9 ? "Wide" : "Story"}
+                                            {selectedImage.aspectRatio === 1
+                                                ? "Square"
+                                                : selectedImage.aspectRatio === 16 / 9
+                                                    ? "Wide"
+                                                    : "Story"}
                                         </span>
                                         <Star className="w-5 h-5 fill-white" />
                                     </div>
@@ -344,7 +368,7 @@ const PhotoFeed = () => {
                             </div>
 
                             <button
-                                onClick={() => alert('Share functionality')}
+                                onClick={() => alert("Share functionality")}
                                 className="mt-4 w-full bg-red-600 text-white px-6 py-3 rounded font-black italic uppercase shadow-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-transform active:scale-95"
                             >
                                 <Share2 className="w-4 h-4" /> Share This Star
@@ -363,9 +387,7 @@ const PhotoFeed = () => {
                             {filteredImages.map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`h-1.5 rounded-full transition-all ${idx === selectedIndex
-                                        ? 'w-8 bg-red-600'
-                                        : 'w-1.5 bg-white/30'
+                                    className={`h-1.5 rounded-full transition-all ${idx === selectedIndex ? "w-8 bg-red-600" : "w-1.5 bg-white/30"
                                         }`}
                                 />
                             ))}
@@ -387,7 +409,7 @@ const PhotoFeed = () => {
                     </div>
                 </div>
 
-                {/* Filter Tabs (Replacing Stats Bar) */}
+                {/* Filter Tabs */}
                 <div className="bg-red-900/50 border-t border-red-600/30 px-4 py-3 overflow-x-auto scrollbar-hide">
                     <div className="flex gap-2 justify-center min-w-max">
                         {CATEGORIES.map((cat) => (
@@ -395,8 +417,8 @@ const PhotoFeed = () => {
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 className={`px-5 py-2 text-xs font-sans font-black italic uppercase tracking-wide transition-all transform -skew-x-6 rounded-sm ${selectedCategory === cat
-                                    ? "bg-white text-red-700 shadow-lg scale-105"
-                                    : "bg-red-950/50 text-red-200 hover:bg-red-900 hover:text-white"
+                                        ? "bg-white text-red-700 shadow-lg scale-105"
+                                        : "bg-red-950/50 text-red-200 hover:bg-red-900 hover:text-white"
                                     }`}
                             >
                                 {cat}
@@ -408,10 +430,7 @@ const PhotoFeed = () => {
 
             {/* Masonry Gallery */}
             <div className="flex-1 bg-neutral-100 relative overflow-hidden">
-                <MasonryGrid
-                    images={filteredImages}
-                    onImageClick={handleImageClick}
-                />
+                <MasonryGrid images={filteredImages} onImageClick={handleImageClick} />
             </div>
         </div>
     )

@@ -69,9 +69,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onImageSelect, onTakePicture 
   const handleCopyHistory = async () => {
     if (!selectedHistoryImage) return
     try {
-      // If it's a Cloudinary URL (starts with http), copy the link
+      // If it's an ImageKit URL (starts with https://ik.imagekit.io/), copy the link
       // If base64, we can't really copy the "link" easily to clipboard as text
-      if (selectedHistoryImage.startsWith("http")) {
+      if (selectedHistoryImage.startsWith("https://ik.imagekit.io/")) {
         await navigator.clipboard.writeText(selectedHistoryImage)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
@@ -107,7 +107,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onImageSelect, onTakePicture 
               >
                 <Download className="w-4 h-4" /> Save
               </button>
-              {selectedHistoryImage.startsWith("http") && (
+              {selectedHistoryImage.startsWith("https://ik.imagekit.io/") && (
                 <button
                   onClick={handleCopyHistory}
                   className="bg-red-600 text-white py-3 rounded font-black italic uppercase text-sm flex items-center justify-center gap-2 hover:bg-red-700"

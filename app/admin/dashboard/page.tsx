@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getAdminImages, deleteImage, getFrames } from "@/lib/actions"
-import type { CloudinaryResource } from "@/types"
+import { getAdminImages, deleteImage, getFrames, uploadToImageKit, testImageKitAuth } from "@/lib/actions"
+import OptimizedImage from "@/components/OptimizedImage"
+import AdminModal from "@/components/AdminModal"
 import {
     LayoutGrid,
     Trash2,
@@ -24,12 +25,29 @@ import {
     Menu
 } from "lucide-react"
 
+interface ImageKitFile {
+    fileId: string
+    name: string
+    url: string
+    tags: string[]
+    width: number
+    height: number
+    size: number
+    createdAt: string
+}
+
 function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => void }) {
-    const [frames, setFrames] = useState<CloudinaryResource[]>([])
+    const [frames, setFrames] = useState<ImageKitFile[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [selectedFrame, setSelectedFrame] = useState<CloudinaryResource | null>(null)
+    const [selectedFrame, setSelectedFrame] = useState<ImageKitFile | null>(null)
     const [showUploadModal, setShowUploadModal] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [modalState, setModalState] = useState<{ isOpen: boolean, type: "success" | "error", title: string, message: string }>({
+        isOpen: false,
+        type: "success",
+        title: "",
+        message: ""
+    })
 
     // Upload State
     const [uploading, setUploading] = useState(false)
@@ -37,8 +55,6 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
     const [customCategory, setCustomCategory] = useState("")
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [preview, setPreview] = useState<string | null>(null)
-
-
 
 
     const fetchFrames = async () => {
@@ -75,7 +91,12 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
 
     const handleSubmit = async () => {
         if (!preview || !category) {
-            alert("Please select an image and enter a category")
+            setModalState({
+                isOpen: true,
+                type: "error",
+                title: "Missing Info",
+                message: "Please select an image and enter a category"
+            })
             return
         }
         setShowConfirmModal(true)
@@ -84,17 +105,26 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
     const confirmUpload = async () => {
         setUploading(true)
         try {
-            const { uploadToCloudinary } = await import("@/lib/actions")
             // If custom category, use the custom input value
             const finalCategory = category === "Custom" ? customCategory : category
             if (!finalCategory) {
-                alert("Please enter a category")
+                setModalState({
+                    isOpen: true,
+                    type: "error",
+                    title: "Missing Category",
+                    message: "Please enter a category"
+                })
                 setUploading(false)
                 setShowConfirmModal(false)
                 return
             }
-            const url = await uploadToCloudinary(preview!, ["frames", finalCategory])
-            alert("Frame uploaded successfully!")
+            const url = await uploadToImageKit(preview!, ["frames", finalCategory], "/frames")
+            setModalState({
+                isOpen: true,
+                type: "success",
+                title: "Frame Added!",
+                message: "Frame uploaded successfully to the collection."
+            })
             setPreview(null)
             setCategory("People")
             setCustomCategory("")
@@ -103,7 +133,12 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
             fetchFrames()
         } catch (error) {
             console.error("Frame upload failed", error)
-            alert("Failed to upload frame")
+            setModalState({
+                isOpen: true,
+                type: "error",
+                title: "Upload Failed",
+                message: "Failed to upload frame. Please try again."
+            })
         } finally {
             setUploading(false)
         }
@@ -115,17 +150,33 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
 
         setIsDeleting(true)
         try {
-            const success = await deleteImage(selectedFrame.public_id)
+            const success = await deleteImage(selectedFrame.fileId)
             if (success) {
-                const newFrames = frames.filter(f => f.public_id !== selectedFrame.public_id)
+                const newFrames = frames.filter(f => f.fileId !== selectedFrame.fileId)
                 setFrames(newFrames)
                 setSelectedFrame(null)
+                setModalState({
+                    isOpen: true,
+                    type: "success",
+                    title: "Frame Deleted",
+                    message: "The frame has been removed successfully."
+                })
             } else {
-                alert("Failed to delete frame")
+                setModalState({
+                    isOpen: true,
+                    type: "error",
+                    title: "Delete Failed",
+                    message: "Failed to delete frame. Please try again."
+                })
             }
         } catch (error) {
             console.error("Delete error", error)
-            alert("An error occurred while deleting")
+            setModalState({
+                isOpen: true,
+                type: "error",
+                title: "Error",
+                message: "An error occurred while deleting."
+            })
         } finally {
             setIsDeleting(false)
         }
@@ -196,22 +247,25 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
                             <div className="flex flex-row gap-4 lg:grid lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-4">
                                 {frames.map((frame) => (
                                     <div
-                                        key={frame.public_id}
+                                        key={frame.fileId}
                                         onClick={() => setSelectedFrame(frame)}
                                         className={`
                                             aspect-[9/16] relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all
                                             flex-none w-40 snap-center lg:w-auto lg:flex-auto bg-neutral-900
-                                            ${selectedFrame?.public_id === frame.public_id
+                                            ${selectedFrame?.fileId === frame.fileId
                                                 ? 'border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.3)] scale-[1.02] z-10'
                                                 : 'border-transparent hover:border-neutral-700 hover:scale-[1.01]'
                                             }
                                         `}
                                     >
-                                        <img
-                                            src={frame.secure_url}
+                                        <OptimizedImage
+                                            src={frame.url}
                                             alt="Frame"
+                                            width={200}
+                                            height={350}
                                             className="w-full h-full object-contain p-2"
                                             loading="lazy"
+                                            showPlaceholder={true}
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
                                             <div className="flex flex-wrap gap-1 mb-1">
@@ -222,7 +276,7 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
                                                 ))}
                                             </div>
                                             <p className="text-[10px] text-white font-mono truncate">
-                                                {formatDate(frame.created_at)}
+                                                {formatDate(frame.createdAt)}
                                             </p>
                                         </div>
                                     </div>
@@ -242,15 +296,18 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
                         <>
                             <div className="p-6 border-b border-neutral-800">
                                 <h2 className="font-sans font-black italic text-xl uppercase text-white mb-1">Frame Details</h2>
-                                <p className="text-xs text-neutral-500 font-mono break-all">{selectedFrame.public_id}</p>
+                                <p className="text-xs text-neutral-500 font-mono break-all">{selectedFrame.fileId}</p>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 <div className="aspect-[9/16] rounded-lg overflow-hidden border border-neutral-700 shadow-lg bg-neutral-950 max-h-64 lg:max-h-none mx-auto lg:mx-0 p-4">
-                                    <img
-                                        src={selectedFrame.secure_url}
+                                    <OptimizedImage
+                                        src={selectedFrame.url}
                                         alt="Preview"
+                                        width={300}
+                                        height={500}
                                         className="w-full h-full object-contain"
+                                        showPlaceholder={false}
                                     />
                                 </div>
 
@@ -277,7 +334,7 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
                                         <Calendar className="w-4 h-4 mt-0.5 text-neutral-500" />
                                         <div>
                                             <p className="text-xs text-neutral-500 uppercase font-bold">Created At</p>
-                                            <p>{formatDate(selectedFrame.created_at)}</p>
+                                            <p>{formatDate(selectedFrame.createdAt)}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 text-sm text-neutral-300">
@@ -426,16 +483,23 @@ function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
                     </div>
                 </div>
             )}
+            <AdminModal
+                isOpen={modalState.isOpen}
+                onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+                type={modalState.type}
+                title={modalState.title}
+                message={modalState.message}
+            />
         </div>
     )
 }
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<"gallery" | "frames">("gallery")
-    const [images, setImages] = useState<CloudinaryResource[]>([])
-    const [filteredImages, setFilteredImages] = useState<CloudinaryResource[]>([])
+    const [images, setImages] = useState<ImageKitFile[]>([])
+    const [filteredImages, setFilteredImages] = useState<ImageKitFile[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [selectedImage, setSelectedImage] = useState<CloudinaryResource | null>(null)
+    const [selectedImage, setSelectedImage] = useState<ImageKitFile | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
@@ -446,6 +510,13 @@ export default function AdminDashboard() {
     const [showGalleryUploadModal, setShowGalleryUploadModal] = useState(false)
     const [galleryPreview, setGalleryPreview] = useState<string | null>(null)
     const [galleryCategory, setGalleryCategory] = useState("featured")
+
+    const [modalState, setModalState] = useState<{ isOpen: boolean, type: "success" | "error", title: string, message: string }>({
+        isOpen: false,
+        type: "success",
+        title: "",
+        message: ""
+    })
 
     const fetchImages = async () => {
         setIsLoading(true)
@@ -467,14 +538,15 @@ export default function AdminDashboard() {
     useEffect(() => {
         if (activeTab === "gallery") {
             fetchImages()
+            testImageKitAuth()
         }
     }, [activeTab])
 
     useEffect(() => {
         // Sort images whenever sortOrder or images change
         const sorted = [...images].sort((a, b) => {
-            const dateA = new Date(a.created_at).getTime()
-            const dateB = new Date(b.created_at).getTime()
+            const dateA = new Date(a.createdAt).getTime()
+            const dateB = new Date(b.createdAt).getTime()
             return sortOrder === "desc" ? dateB - dateA : dateA - dateB
         })
         setFilteredImages(sorted)
@@ -490,19 +562,35 @@ export default function AdminDashboard() {
 
         setIsDeleting(true)
         try {
-            const success = await deleteImage(selectedImage.public_id)
+            const success = await deleteImage(selectedImage.fileId)
             if (success) {
                 // Remove from local state
-                const newImages = images.filter(img => img.public_id !== selectedImage.public_id)
+                const newImages = images.filter(img => img.fileId !== selectedImage.fileId)
                 setImages(newImages)
                 setSelectedImage(null)
                 setShowDeleteModal(false)
+                setModalState({
+                    isOpen: true,
+                    type: "success",
+                    title: "Star Removed",
+                    message: "The image has been deleted successfully."
+                })
             } else {
-                alert("Failed to delete image")
+                setModalState({
+                    isOpen: true,
+                    type: "error",
+                    title: "Delete Failed",
+                    message: "Failed to delete image. Please try again."
+                })
             }
         } catch (error) {
             console.error("Delete error", error)
-            alert("An error occurred while deleting")
+            setModalState({
+                isOpen: true,
+                type: "error",
+                title: "Error",
+                message: "An error occurred while deleting."
+            })
         } finally {
             setIsDeleting(false)
         }
@@ -524,15 +612,25 @@ export default function AdminDashboard() {
 
         setIsUploading(true)
         try {
-            const { uploadToCloudinary } = await import("@/lib/actions")
-            const url = await uploadToCloudinary(galleryPreview, [galleryCategory])
+            const url = await uploadToImageKit(galleryPreview, [galleryCategory], "/featured")
             await fetchImages()
             setShowGalleryUploadModal(false)
             setGalleryPreview(null)
             setGalleryCategory("featured")
+            setModalState({
+                isOpen: true,
+                type: "success",
+                title: "Upload Success",
+                message: "Image added to the gallery successfully!"
+            })
         } catch (error) {
             console.error("Upload failed", error)
-            alert("Failed to upload image")
+            setModalState({
+                isOpen: true,
+                type: "error",
+                title: "Upload Failed",
+                message: "Failed to upload image. Please try again."
+            })
         } finally {
             setIsUploading(false)
         }
@@ -722,29 +820,32 @@ export default function AdminDashboard() {
                                         <div className="flex flex-row gap-4 lg:grid lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-4">
                                             {filteredImages.map((img) => (
                                                 <div
-                                                    key={img.public_id}
+                                                    key={img.fileId}
                                                     onClick={() => setSelectedImage(img)}
                                                     className={`
                                   aspect-[9/16] relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all
                                   flex-none w-40 snap-center lg:w-auto lg:flex-auto
-                                  ${selectedImage?.public_id === img.public_id
+                                  ${selectedImage?.fileId === img.fileId
                                                             ? 'border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.3)] scale-[1.02] z-10'
                                                             : 'border-transparent hover:border-neutral-700 hover:scale-[1.01]'
                                                         }
                                 `}
                                                 >
-                                                    <img
-                                                        src={img.secure_url}
+                                                    <OptimizedImage
+                                                        src={img.url}
                                                         alt="User upload"
+                                                        width={200}
+                                                        height={350}
                                                         className="w-full h-full object-cover bg-neutral-900"
                                                         loading="lazy"
+                                                        showPlaceholder={true}
                                                     />
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
                                                         <p className="text-[10px] text-white font-mono truncate">
-                                                            {formatDate(img.created_at)}
+                                                            {formatDate(img.createdAt)}
                                                         </p>
                                                     </div>
-                                                    {selectedImage?.public_id === img.public_id && (
+                                                    {selectedImage?.fileId === img.fileId && (
                                                         <div className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full shadow-lg animate-pulse"></div>
                                                     )}
                                                 </div>
@@ -764,15 +865,18 @@ export default function AdminDashboard() {
                                     <>
                                         <div className="p-6 border-b border-neutral-800">
                                             <h2 className="font-sans font-black italic text-xl uppercase text-white mb-1">Details</h2>
-                                            <p className="text-xs text-neutral-500 font-mono break-all">{selectedImage.public_id}</p>
+                                            <p className="text-xs text-neutral-500 font-mono break-all">{selectedImage.fileId}</p>
                                         </div>
 
                                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                             <div className="aspect-[9/16] rounded-lg overflow-hidden border border-neutral-700 shadow-lg bg-neutral-950 max-h-64 lg:max-h-none mx-auto lg:mx-0">
-                                                <img
-                                                    src={selectedImage.secure_url}
+                                                <OptimizedImage
+                                                    src={selectedImage.url}
                                                     alt="Preview"
+                                                    width={300}
+                                                    height={500}
                                                     className="w-full h-full object-contain"
+                                                    showPlaceholder={false}
                                                 />
                                             </div>
 
@@ -781,7 +885,7 @@ export default function AdminDashboard() {
                                                     <Calendar className="w-4 h-4 mt-0.5 text-neutral-500" />
                                                     <div>
                                                         <p className="text-xs text-neutral-500 uppercase font-bold">Created At</p>
-                                                        <p>{formatDate(selectedImage.created_at)}</p>
+                                                        <p>{formatDate(selectedImage.createdAt)}</p>
                                                     </div>
                                                 </div>
 
@@ -789,7 +893,7 @@ export default function AdminDashboard() {
                                                     <HardDrive className="w-4 h-4 mt-0.5 text-neutral-500" />
                                                     <div>
                                                         <p className="text-xs text-neutral-500 uppercase font-bold">Size</p>
-                                                        <p>{(selectedImage.bytes / 1024).toFixed(1)} KB</p>
+                                                        <p>{selectedImage.size ? (selectedImage.size / 1024).toFixed(1) : '0'} KB</p>
                                                     </div>
                                                 </div>
 
@@ -810,18 +914,18 @@ export default function AdminDashboard() {
                                                 className="w-full bg-red-900/20 text-red-500 border border-red-900/50 py-3 rounded font-bold uppercase text-xs hover:bg-red-900/40 hover:text-red-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                             >
                                                 {isDeleting ? (
-                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : (
                                                     <Trash2 className="w-4 h-4" />
                                                 )}
-                                                {isDeleting ? "Deleting..." : "Delete Image"}
+                                                {isDeleting ? "Deleting..." : "Delete Star"}
                                             </button>
                                         </div>
                                     </>
                                 ) : (
                                     <div className="flex-1 flex flex-col items-center justify-center text-neutral-600 p-6 text-center">
                                         <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mb-4">
-                                            <LayoutGrid className="w-8 h-8 opacity-50" />
+                                            <ImageIcon className="w-8 h-8 opacity-50" />
                                         </div>
                                         <p className="font-medium text-sm">Select an image to view details</p>
                                     </div>
@@ -829,7 +933,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Gallery Upload Modal */}
+                        {/* Upload Modal */}
                         {showGalleryUploadModal && (
                             <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
                                 <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-8 max-w-lg w-full shadow-2xl relative overflow-hidden animate-scale-in">
@@ -840,7 +944,7 @@ export default function AdminDashboard() {
                                         <X className="w-6 h-6" />
                                     </button>
 
-                                    <h2 className="text-2xl font-black italic uppercase text-white mb-6">Add New Photo</h2>
+                                    <h2 className="text-2xl font-black italic uppercase text-white mb-6">Upload to Gallery</h2>
 
                                     <div className="space-y-6">
                                         {/* Image Upload */}
@@ -870,7 +974,7 @@ export default function AdminDashboard() {
 
                                         {/* Category Input */}
                                         <div className="space-y-2">
-                                            <label className="block text-sm font-bold uppercase text-neutral-400">Tag</label>
+                                            <label className="block text-sm font-bold uppercase text-neutral-400">Category</label>
                                             <select
                                                 value={galleryCategory}
                                                 onChange={(e) => setGalleryCategory(e.target.value)}
@@ -888,7 +992,7 @@ export default function AdminDashboard() {
                                             className="w-full bg-red-600 text-white py-4 rounded-lg font-black italic uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-red-900/20 transform active:scale-[0.99]"
                                         >
                                             {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
-                                            {isUploading ? "Uploading..." : "Add Photo"}
+                                            {isUploading ? "Uploading..." : "Upload to Gallery"}
                                         </button>
                                     </div>
                                 </div>
@@ -897,7 +1001,9 @@ export default function AdminDashboard() {
                     </>
                 )}
 
-                {activeTab === "frames" && <FrameManager setSidebarOpen={setSidebarOpen} />}
+                {activeTab === "frames" && (
+                    <FrameManager setSidebarOpen={setSidebarOpen} />
+                )}
             </div>
         </div>
     )
