@@ -20,10 +20,11 @@ import {
     Image as ImageIcon,
     Frame as FrameIcon,
     X,
-    Tag
+    Tag,
+    Menu
 } from "lucide-react"
 
-function FrameManager() {
+function FrameManager({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => void }) {
     const [frames, setFrames] = useState<CloudinaryResource[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [selectedFrame, setSelectedFrame] = useState<CloudinaryResource | null>(null)
@@ -145,7 +146,14 @@ function FrameManager() {
         <div className="flex-1 flex flex-col h-full relative">
             {/* Action Bar */}
             <div className="h-16 bg-neutral-900/50 border-b border-neutral-800 flex items-center justify-end px-6 gap-4 flex-none z-10 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mr-auto text-sm text-neutral-400">
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="md:hidden p-2 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400 hover:text-white border border-neutral-800 mr-auto"
+                    title="Toggle Menu"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-2 mr-auto md:mr-auto text-sm text-neutral-400">
                     <FrameIcon className="w-4 h-4" />
                     <span className="font-medium">{frames.length} Frames</span>
                 </div>
@@ -431,6 +439,7 @@ export default function AdminDashboard() {
     const [isDeleting, setIsDeleting] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
+    const [sidebarOpen, setSidebarOpen] = useState(false)
     const router = useRouter()
 
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -544,18 +553,36 @@ export default function AdminDashboard() {
 
     return (
         <div className="h-screen w-full bg-neutral-950 text-white flex overflow-hidden relative">
+            {/* Mobile Overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <div className="w-64 bg-neutral-900 border-r border-neutral-800 flex flex-col flex-none z-30">
+            <div className={`w-64 bg-neutral-900 border-r border-neutral-800 flex flex-col flex-none z-30 md:flex ${sidebarOpen ? 'absolute inset-y-0 left-0 shadow-2xl' : 'hidden'} md:relative md:shadow-none`}>
                 <div className="h-16 flex items-center px-6 border-b border-neutral-800 gap-3">
                     <div className="w-8 h-8 bg-red-700 rounded flex items-center justify-center font-black italic">
                         ULP
                     </div>
                     <h1 className="font-sans font-bold text-lg tracking-tight">Admin</h1>
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="ml-auto md:hidden p-1 hover:bg-neutral-800 rounded transition-colors text-neutral-400 hover:text-white"
+                        title="Close Menu"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
                     <button
-                        onClick={() => setActiveTab("gallery")}
+                        onClick={() => {
+                            setActiveTab("gallery")
+                            setSidebarOpen(false)
+                        }}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase text-xs tracking-wider ${activeTab === "gallery"
                             ? "bg-red-600 text-white shadow-lg"
                             : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
@@ -565,7 +592,10 @@ export default function AdminDashboard() {
                         Gallery Manager
                     </button>
                     <button
-                        onClick={() => setActiveTab("frames")}
+                        onClick={() => {
+                            setActiveTab("frames")
+                            setSidebarOpen(false)
+                        }}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-bold uppercase text-xs tracking-wider ${activeTab === "frames"
                             ? "bg-red-600 text-white shadow-lg"
                             : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
@@ -633,8 +663,15 @@ export default function AdminDashboard() {
                         )}
 
                         {/* Action Bar */}
-                        <div className="h-16 bg-neutral-900/50 border-b border-neutral-800 flex items-center justify-end px-6 gap-4 flex-none z-10 backdrop-blur-sm">
-                            <div className="flex items-center gap-2 mr-auto text-sm text-neutral-400">
+                        <div className="h-16 bg-neutral-900/50 border-b border-neutral-800 flex items-center justify-center px-4 gap-4 flex-none z-10 backdrop-blur-sm">
+                            <button
+                                onClick={() => setSidebarOpen(!sidebarOpen)}
+                                className="md:hidden p-2 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400 hover:text-white border border-neutral-800 mr-auto"
+                                title="Toggle Menu"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </button>
+                            <div className="flex items-center gap-2 mr-auto md:mr-auto text-sm text-neutral-400">
                                 <LayoutGrid className="w-4 h-4" />
                                 <span className="font-medium">{filteredImages.length} Images</span>
                             </div>
@@ -860,7 +897,7 @@ export default function AdminDashboard() {
                     </>
                 )}
 
-                {activeTab === "frames" && <FrameManager />}
+                {activeTab === "frames" && <FrameManager setSidebarOpen={setSidebarOpen} />}
             </div>
         </div>
     )
