@@ -1,6 +1,6 @@
 import type { Frame } from "@/types"
 
-export const CATEGORIES = ["All Frames", "Classic", "Modern", "Bold"]
+export const CATEGORIES = ["People", "Slogan"]
 
 export const FRAMES: Frame[] = [
   {
@@ -29,4 +29,10 @@ export const CLOUDINARY_CONFIG = {
   wallTag: process.env.NEXT_PUBLIC_CLOUDINARY_WALL_TAG || "ulp_wall",
   ApiSecret: process.env.CLOUDINARY_API_SECRET || "",
   ApiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || "",
+}
+
+export const TAGS = {
+  STAR_PIC: "star-pic",
+  FEATURED: "featured",
+  FRAME: "frames", // Plural as per new request
 }

@@ -92,6 +92,9 @@ dependencies:
   '@radix-ui/react-tooltip':
     specifier: 1.1.6
     version: 1.1.6(@types/react-dom@19.2.3)(@types/react@19.2.6)(react-dom@19.2.0)(react@19.2.0)
+  '@tanstack/react-query':
+    specifier: ^5.90.10
+    version: 5.90.10(react@19.2.0)
   '@vercel/analytics':
     specifier: latest
     version: 1.5.0(next@16.0.3)(react@19.2.0)
@@ -1992,6 +1995,19 @@ packages:
       postcss: 8.5.6
       tailwindcss: 4.1.17
     dev: true
+
+  /@tanstack/query-core@5.90.10:
+    resolution: {integrity: sha512-EhZVFu9rl7GfRNuJLJ3Y7wtbTnENsvzp+YpcAV7kCYiXni1v8qZh++lpw4ch4rrwC0u/EZRnBHIehzCGzwXDSQ==}
+    dev: false
+
+  /@tanstack/react-query@5.90.10(react@19.2.0):
+    resolution: {integrity: sha512-BKLss9Y8PQ9IUjPYQiv3/Zmlx92uxffUOX8ZZNoQlCIZBJPT5M+GOMQj7xislvVQ6l1BstBjcX0XB/aHfFYVNw==}
+    peerDependencies:
+      react: ^18 || ^19
+    dependencies:
+      '@tanstack/query-core': 5.90.10
+      react: 19.2.0
+    dev: false
 
   /@types/d3-array@3.2.2:
     resolution: {integrity: sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==}

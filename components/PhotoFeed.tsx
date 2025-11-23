@@ -165,7 +165,7 @@ const PhotoFeed = () => {
     const x = useMotionValue(0)
     const opacity = useTransform(x, [-200, 0, 200], [0.5, 1, 0.5])
 
-    const CATEGORIES = ["All", "Trending", "Newest", "Featured"]
+    const CATEGORIES = ["All", "Featured"]
 
     // Fetch images from Cloudinary
     useEffect(() => {
@@ -174,40 +174,27 @@ const PhotoFeed = () => {
                 // Fetch real images
                 const wallImages = await getWallImages()
 
-                // Mock data for fallback/demo
-                const mockImages = [
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/588363042_25802814315978061_7224626267314817289_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=iQXVAravhGkQ7kNvwEaB8ws&_nc_oc=AdkeF6yAp0gsxVevTZVpriU4eyywGZ0sSJNGY1V4BoWacC528uXxDXa48ePRYiIuds8&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=ymxLzUPgGN-DSej9xYSu_w&oh=00_AfgO01jiGDeoyNYL7JsFcDlaskKboYjQi3pDjXaImENmww&oe=6927DA1D", aspectRatio: 9 / 16, category: "Trending" },
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/546162704_1332115925200750_4753958421008208380_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=BFqHpt7tVeYQ7kNvwGGuJ0r&_nc_oc=AdlJRt73gduzLHkUrZFSnsG4UdX5Ap5LVdG5N8Ivp3qyiXXrjZ4ylxHShXaEYuOWVuw&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=2uMm4j5mlzHaY01P8NNang&oh=00_AfjOyoG9jwgv31VZIQk_41jaKYwtkG-Jlx4hmNIuec6EqQ&oe=6927AF39", aspectRatio: 9 / 16, category: "Newest" },
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/545306024_1332115951867414_7099443326228007837_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=2kY8_24BlscQ7kNvwHY2-9E&_nc_oc=Adni8Ewnidqm9bYqVdpd180Qo4fP65hJThOXwxEF6utciVsqQqMxdC3wNGOQ4mtSPyc&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=4CUmXn3axozAw8fIm4MWqg&oh=00_Afgysflt7i_b00h_Gras-lIK6OFyMa9A7Y3IKiL22ZpZ7A&oe=6927BEF0", aspectRatio: 9 / 16, category: "Featured" },
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/545306024_1332115951867414_7099443326228007837_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=2kY8_24BlscQ7kNvwHY2-9E&_nc_oc=Adni8Ewnidqm9bYqVdpd180Qo4fP65hJThOXwxEF6utciVsqQqMxdC3wNGOQ4mtSPyc&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=4CUmXn3axozAw8fIm4MWqg&oh=00_Afgysflt7i_b00h_Gras-lIK6OFyMa9A7Y3IKiL22ZpZ7A&oe=6927BEF0", aspectRatio: 1, category: "Trending" },
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/545306024_1332115951867414_7099443326228007837_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=2kY8_24BlscQ7kNvwHY2-9E&_nc_oc=Adni8Ewnidqm9bYqVdpd180Qo4fP65hJThOXwxEF6utciVsqQqMxdC3wNGOQ4mtSPyc&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=4CUmXn3axozAw8fIm4MWqg&oh=00_Afgysflt7i_b00h_Gras-lIK6OFyMa9A7Y3IKiL22ZpZ7A&oe=6927BEF0", aspectRatio: 1, category: "Newest" },
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/587055389_25778525731740253_7091730232399758850_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=833d8c&_nc_ohc=FnoOVmaeFxMQ7kNvwGJC7c7&_nc_oc=Adn6iyyq2rLQT7lb6MkZQ9umpowJambmvpjHMQGsSPGA6Z_oouj6qQOV9TBYmcTla4g&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=eXL1h9c2DU99smeu3RVEIA&oh=00_AfjhAE85j5p__v-VhFfWzQRDc584raBXWVDn3pDlhMyupA&oe=6927A92B", aspectRatio: 1, category: "Featured" },
-                    { url: "https://scontent.fsvd1-1.fna.fbcdn.net/v/t39.30808-6/578152552_1380528110359531_8871945834446734851_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_ohc=Szbz5J_2C-QQ7kNvwFmSWU1&_nc_oc=AdlZiVw4xbLyQ3E4VifGe0WqRphqdqsTclQxW9m-5OzXnlzmQg7WlbPt8-zBZibvXs8&_nc_zt=23&_nc_ht=scontent.fsvd1-1.fna&_nc_gid=rjoplnzs3arqstUIQHw78g&oh=00_Afi8uig-xZfwIYyK1L4Rx0IsFzvwwua2O-0t6daKNnnKYQ&oe=6927C582", aspectRatio: 16 / 9, category: "Trending" },
-                ]
+                const imageData = wallImages.map((img: any, idx: number) => {
+                    let category = "Newest"
+                    if (img.tags?.includes("featured")) {
+                        category = "Featured"
+                    }
+                    // If we want to distinguish "Newest" specifically, we can just treat all as Newest by default, 
+                    // but "Featured" ones are also "Newest". 
+                    // The filter logic below handles "All" and specific categories.
+                    // For "Newest" filter, we might want to show all sorted by date.
+                    // For "Featured" filter, show only featured.
 
-                // Process real images
-                // Since we don't have metadata for aspect ratio/category from the simple URL list,
-                // we'll assign defaults or random values for the demo feel.
-                const processedRealImages = wallImages.map((url, idx) => ({
-                    url,
-                    aspectRatio: 9 / 16, // Default to portrait for user uploads
-                    category: "Newest", // Assume user uploads are new
-                }))
-
-                // Combine real and mock
-                // Filter out duplicates if any
-                const allRawImages = [...processedRealImages, ...mockImages]
-                const uniqueImages = Array.from(new Set(allRawImages.map(i => i.url)))
-                    .map(url => allRawImages.find(i => i.url === url))
-                    .filter(Boolean) as any[]
-
-                const imageData = uniqueImages.map((img, idx) => ({
-                    id: `img-${idx}`,
-                    url: img.url,
-                    aspectRatio: img.aspectRatio,
-                    category: img.category,
-                    index: idx
-                }))
+                    return {
+                        id: img.public_id,
+                        url: img.secure_url,
+                        aspectRatio: img.width && img.height ? img.width / img.height : 9 / 16,
+                        category: category, // This is just for display or initial logic, but filtering should check tags dynamically or we map properly.
+                        tags: img.tags || [],
+                        created_at: img.created_at,
+                        index: idx
+                    }
+                })
 
                 setImages(imageData)
                 setFilteredImages(imageData)
@@ -222,6 +209,12 @@ const PhotoFeed = () => {
     useEffect(() => {
         if (selectedCategory === "All") {
             setFilteredImages(images)
+        } else if (selectedCategory === "Newest") {
+            // Sort by date if possible, otherwise just show all
+            // Assuming images are already sorted by date from backend
+            setFilteredImages(images)
+        } else if (selectedCategory === "Featured") {
+            setFilteredImages(images.filter(img => img.tags?.includes("featured")))
         } else {
             setFilteredImages(images.filter(img => img.category === selectedCategory))
         }

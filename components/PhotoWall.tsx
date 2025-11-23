@@ -146,9 +146,9 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none"></div>
 
             <div className="mb-6 relative">
-              <div className="absolute inset-0 bg-yellow-400/20 blur-3xl rounded-full"></div>
-              <Star className="w-24 h-24 mx-auto text-yellow-400 fill-yellow-400 animate-pulse relative z-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-              <Sparkles className="w-10 h-10 absolute top-0 right-8 text-yellow-200 animate-bounce" />
+              <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full"></div>
+              <Star className="w-24 h-24 mx-auto text-white fill-white animate-pulse relative z-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+              <Sparkles className="w-10 h-10 absolute top-0 right-8 text-white animate-bounce" />
             </div>
 
             <h3 className="text-4xl font-sans font-black italic uppercase mb-2 text-white tracking-tighter transform -skew-x-6">
@@ -178,7 +178,7 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
 
             <div className="bg-black/20 rounded p-3 mb-6">
               <p className="text-[10px] uppercase tracking-widest opacity-80 font-bold">
-                You are Supporter #{metrics.totalPhotos}
+                {/* You are Supporter #{metrics.totalPhotos} */}
               </p>
             </div>
 
@@ -233,10 +233,10 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
           </button>
           <div className="text-center">
             <h1 className="text-2xl font-sans font-black italic uppercase tracking-tighter transform -skew-x-6">
-              Star Wall
+              You're a Star!
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-widest text-red-200">
-              {metrics.totalPhotos} Proud Supporters
+              Thank you for being a Proud Supporters
             </p>
           </div>
           <button
@@ -249,7 +249,7 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
         </div>
 
         {/* Stats Bar */}
-        <div className="bg-red-900/50 border-t border-red-600/30 px-4 py-3">
+        {/* <div className="bg-red-900/50 border-t border-red-600/30 px-4 py-3">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-white/10 rounded p-2">
               <Users className="w-5 h-5 mx-auto mb-1 text-red-200" />
@@ -267,13 +267,13 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
               <p className="text-[9px] uppercase tracking-wider text-red-200">Trending</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Your Contribution Badge */}
         {currentUpload && (
-          <div className="bg-yellow-400 text-neutral-900 px-4 py-2 flex items-center justify-center gap-2">
-            <Star className="w-4 h-4 fill-current" />
-            <p className="font-black italic text-sm uppercase">You're part of the movement, {userName}!</p>
+          <div className="bg-red-800 text-neutral-900 px-4 py-2 flex items-center justify-center gap-2">
+            {/* <Star className="w-4 h-4 fill-current" />
+            <p className="text-neutral-600 italic text-sm uppercase">You're part of the movement!</p> */}
           </div>
         )}
       </header>
@@ -320,13 +320,14 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
                 )}
 
                 {/* All Photos Grid */}
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <h3 className="font-black italic uppercase text-neutral-900 mb-3 tracking-wide flex items-center gap-2">
                     <Users className="w-5 h-5 text-red-600" />
                     All Supporters
                   </h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3 pb-24">
+                </div> */}
+
+                {/* <div className="grid grid-cols-2 gap-3 pb-24">
                   {images.map((url, idx) => (
                     <div
                       key={idx}
@@ -344,37 +345,28 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
                       </div>
                     </div>
                   ))}
-                </div>
+                </div> */}
               </div>
             )}
           </>
         )}
       </div>
 
+
       {/* Footer CTA */}
+
       <div className="bg-white border-t-4 border-red-600 z-10 shadow-[0_-5px_20px_rgba(0,0,0,0.15)] flex-none">
         <div className="p-4">
           {/* Social Proof */}
           <div className="mb-3 text-center">
             <p className="text-neutral-600 text-xs font-bold uppercase tracking-wider mb-1">
-              Join {metrics.totalPhotos}+ Supporters
+
             </p>
             <div className="flex justify-center items-center gap-1">
-              {images.slice(0, 5).map((url, i) => (
-                <img
-                  key={i}
-                  src={url || "/placeholder.svg"}
-                  className="w-8 h-8 rounded-full border-2 border-white -ml-2 first:ml-0 shadow-sm object-cover"
-                  alt=""
-                />
-              ))}
-              {images.length > 5 && (
-                <div className="w-8 h-8 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center -ml-2 border-2 border-white">
-                  +{images.length - 5}
-                </div>
-              )}
+
             </div>
           </div>
+
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
@@ -382,9 +374,9 @@ const PhotoWall: React.FC<PhotoWallProps> = ({ currentUpload, onBack, userName =
               onClick={onBack}
               className="bg-red-700 text-white font-sans font-black italic py-4 px-4 shadow-lg hover:bg-red-800 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider transform -skew-x-3"
             >
-              <div className="transform skew-x-3 flex items-center gap-2">
+              <div className="transform skew-x-3 flex items-center gap-3">
                 <Camera className="w-5 h-5" />
-                <span className="text-sm">Add Photo</span>
+                <span className="text-sm">Add Another Photo</span>
               </div>
             </button>
 

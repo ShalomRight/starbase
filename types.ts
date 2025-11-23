@@ -36,4 +36,10 @@ export interface CloudinaryResource {
   height: number
   url: string
   secure_url: string
+  tags?: string[]
+  context?: {
+    custom?: {
+      [key: string]: string
+    }
+  }
 }

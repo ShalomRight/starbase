@@ -262,7 +262,7 @@ const CameraPage: React.FC<CameraPageProps> = ({ imageSrc, frame, onBack, onStar
     setLoadingText("Posting...")
 
     try {
-      const url = await uploadToCloudinary(compositedImage)
+      const url = await uploadToCloudinary(compositedImage, ["star-pic"])
       savePhotoToHistory(url)
       onGoToWall(url)
     } catch (error) {
