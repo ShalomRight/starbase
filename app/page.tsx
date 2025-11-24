@@ -8,9 +8,11 @@ import CapturePage from "@/components/CapturePage"
 import CameraPage from "@/components/CameraPage"
 import PhotoWall from "@/components/PhotoWall"
 import PhotoFeed from "@/components/PhotoFeed"
-import HistoryPage from "@/components/HistoryPage"
+import ActivityPage from "@/components/ActivityPage"
 import DomeGallery from "@/components/DomeGallery"
 import BottomNav from "@/components/BottomNav"
+import FireFeed from "@/components/FireFeed"
+
 import { Frame } from "@/types"
 
 type Page = "cover" | "landing" | "capture" | "frames" | "camera" | "wall" | "feed" | "dome"
@@ -105,11 +107,11 @@ export default function Home() {
     }
 
     if (currentTab === "stars") {
-      return <PhotoFeed />
+      return <FireFeed />
     }
 
-    if (currentTab === "history") {
-      return <HistoryPage />
+    if (currentTab === "activity") {
+      return <ActivityPage />
     }
 
     return null

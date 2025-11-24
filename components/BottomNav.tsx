@@ -1,5 +1,5 @@
 import type React from "react"
-import { Camera, Grid, History, Star } from "lucide-react"
+import { Camera, Grid, Activity, Star } from "lucide-react"
 
 interface BottomNavProps {
     currentTab: string
@@ -11,7 +11,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onTabChange, hasNewNo
     const tabs = [
         { id: "photo", label: "Photo", icon: Camera },
         { id: "stars", label: "Stars", icon: Star },
-        { id: "history", label: "History", icon: History },
+        { id: "activity", label: "Activity", icon: Activity },
     ]
 
     return (

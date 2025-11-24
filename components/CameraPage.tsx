@@ -19,7 +19,8 @@ import {
   Palette,
 } from "lucide-react"
 import type { Frame } from "../types"
-import { uploadToImageKit } from "../lib/actions"
+import { uploadPhotoToWall } from "@/lib/actions"
+import { useAnonymousUser } from "@/hooks/useAnonymousUser"
 import { savePhotoToHistory } from "../lib/storage"
 
 interface CameraPageProps {
@@ -42,6 +43,9 @@ const CameraPage: React.FC<CameraPageProps> = ({ imageSrc, frame, onBack, onStar
   // Text Customization State
   const [showTextControls, setShowTextControls] = useState(false)
   const [customText, setCustomText] = useState("")
+
+  // Get anonymous user
+  const { uid } = useAnonymousUser()
   const [textPosition, setTextPosition] = useState<"bottom" | "top">("bottom")
   const [textColor, setTextColor] = useState<"white" | "red">("white")
 
@@ -262,7 +266,13 @@ const CameraPage: React.FC<CameraPageProps> = ({ imageSrc, frame, onBack, onStar
     setLoadingText("Posting...")
 
     try {
-      const url = await uploadToImageKit(compositedImage, ["star-pic"], "/ulp-stars")
+      const { url } = await uploadPhotoToWall(compositedImage, {
+        tags: ["star-pic"],
+        folder: "/ulp-stars",
+        userId: uid,
+        userName: "Supporter", // Could add input for name later
+        caption: customText || undefined
+      })
       savePhotoToHistory(url)
       onGoToWall(url)
     } catch (error) {

@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null 
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Helper function to check if user is authenticated (including anonymous)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Photos collection
+    match /photos/{photoId} {
+      // Anyone can read active photos (no auth required)
+      allow read: if resource.data.status == 'active';
+      
+      // Authenticated users (including anonymous) can create photos
+      allow create: if isAuthenticated();
+      
+      // Users can update photos they created OR admins can update any photo
+      allow update: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // Only admins can delete photos
+      allow delete: if isAdmin();
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read user profiles
+      allow read: if true;
+      
+      // Users can only write their own profile (including anonymous users)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users cannot delete their own profile (only admins can)
+      allow delete: if isAdmin();
+    }
+    
+    // Admins collection
+    match /admins/{userId} {
+      // Only admins can read the admins list
+      allow read: if isAdmin();
+      
+      // No one can write to admins (must be done manually in Firebase Console)
+      allow write: if false;
+    }
+  }
+}

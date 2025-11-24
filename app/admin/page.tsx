@@ -1,11 +1,16 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { verifyAdminPassword } from "@/lib/actions"
-import { Star, Lock, Loader2 } from "lucide-react"
+import { createAdminUser } from "@/lib/actions"
+import { getClientAuth } from "@/lib/firebase/client"
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
+import { Star, Lock, Loader2, Mail, UserPlus, LogIn } from "lucide-react"
+import { ADMIN_WHITELIST } from "@/lib/whitelist"
 
 export default function AdminLogin() {
+    const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [isSignup, setIsSignup] = useState(false)
     const [error, setError] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
@@ -15,15 +20,36 @@ export default function AdminLogin() {
         setIsLoading(true)
         setError("")
 
+        const auth = getClientAuth()
+
         try {
-            const isValid = await verifyAdminPassword(password)
-            if (isValid) {
+            if (isSignup) {
+                if (!ADMIN_WHITELIST.includes(email)) {
+                    setError("This email is not authorized to create an admin account.")
+                    setIsLoading(false)
+                    return
+                }
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+                const user = userCredential.user
+                // Create admin user record in Firestore
+                await createAdminUser(user.uid, user.email!)
                 router.push("/admin/dashboard")
             } else {
-                setError("Invalid password. Access denied.")
+                await signInWithEmailAndPassword(auth, email, password)
+                router.push("/admin/dashboard")
             }
-        } catch (err) {
-            setError("An error occurred. Please try again.")
+        } catch (err: any) {
+            console.error("Auth error:", err)
+            if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                setError("Invalid email or password.")
+            } else if (err.code === 'auth/email-already-in-use') {
+                setError("Email is already in use.")
+            } else if (err.code === 'auth/weak-password') {
+                setError("Password should be at least 6 characters.")
+            } else {
+                setError(err.message || "An authentication error occurred.")
+            }
         } finally {
             setIsLoading(false)
         }
@@ -58,20 +84,45 @@ export default function AdminLogin() {
                     <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
                         <div>
                             <label
+                                htmlFor="email"
+                                className="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2"
+                            >
+                                Email Address
+                            </label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-neutral-950 border border-neutral-800 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-neutral-700"
+                                    placeholder="admin@example.com"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
                                 htmlFor="password"
                                 className="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2"
                             >
                                 Password
                             </label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-neutral-950 border border-neutral-800 text-white px-4 py-3 rounded focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-neutral-700"
-                                placeholder="Enter admin password"
-                                autoFocus
-                            />
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                                <input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-neutral-950 border border-neutral-800 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-neutral-700"
+                                    placeholder="••••••••"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
                         </div>
 
                         {error && (
@@ -89,13 +140,29 @@ export default function AdminLogin() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Verifying...
+                                    {isSignup ? "Creating Account..." : "Verifying..."}
                                 </>
                             ) : (
-                                "Login to Dashboard"
+                                <>
+                                    {isSignup ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+                                    {isSignup ? "Create Admin Account" : "Login to Dashboard"}
+                                </>
                             )}
                         </button>
                     </form>
+
+                    <div className="mt-6 text-center relative z-10">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsSignup(!isSignup)
+                                setError("")
+                            }}
+                            className="text-neutral-400 text-xs hover:text-white transition-colors underline decoration-neutral-700 hover:decoration-white underline-offset-4"
+                        >
+                            {isSignup ? "Already have an account? Login" : "Need an account? Sign Up"}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="mt-8 text-center">
