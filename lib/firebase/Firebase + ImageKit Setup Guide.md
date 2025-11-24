@@ -29,3 +29,22 @@
 - Check Firebase Client is initialized
 - Check browser console for connection errors
 - Test with two browser windows
+
+🎨 Key Features:
+✅ Real-time Updates - Photos appear instantly when uploaded
+✅ Like Button - Users can like photos (with optimistic updates)
+✅ User Tracking - Tracks who liked what
+✅ Rich Metadata - Stores user info, engagement stats
+✅ Featured Photos - Toggle featured status
+✅ Scalable - Firebase handles millions of users
+✅ Secure - Firestore security rules protect data
+🔄 How It Works:
+User uploads photo
+    ↓
+1. Image → ImageKit (get URL)
+    ↓
+2. Metadata → Firestore (store data)
+    ↓
+3. Real-time listener triggers
+    ↓
+4. PhotoFeed updates instantly ✨

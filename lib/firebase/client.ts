@@ -19,9 +19,9 @@ export const firebaseConfig = {
     apiKey: "AIzaSyBjeaczhMRhDJ4lJSu-DXqnZtLt15DSXDU",
     authDomain: "starapp-7c080.firebaseapp.com",
     projectId: "starapp-7c080",
-    storageBucket: "starapp-7c080.firebasestorage.app",
-    messagingSenderId: "424174566034",
-    appId: "1:424174566034:web:21da42a90115a62db8c44b",
+    storageBucket: "starapp-7c080. firebasestorage.app",
+    messagingsenderId: "424174566034",
+    appId: "1:424174566034:web: 21da42a90115a62db8c44b",
     measurementId: "G-W465YW4R70"
 }
 
